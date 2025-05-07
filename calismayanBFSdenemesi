@@ -1,0 +1,462 @@
+#include "raylib.h"
+#include "raymath.h"
+#include <math.h>
+
+#define NUMBER_OF_STATIC_BALLS 80
+#define NUMBER_OF_MOVING_BALLS 15
+
+
+typedef enum {
+    screenMenu,
+    screenScore,
+    screenInfo,
+    screenLevel,
+    screenGame,
+    screenOver
+} GameScreen;
+
+typedef struct {
+    int id;
+    Vector2 position;
+    Vector2 velocity;
+    bool isMoving;
+    bool isVisible;
+    bool isChecked;
+    bool isFalling;
+    int colorNum;
+    Color color;
+    Color secondColor;
+} Bubble;
+
+typedef struct {
+    Vector2 position;
+    Vector2 size;
+    Color colorBtn;
+    Color colorText;
+    char* text;
+    int fontSize;
+} Button;
+
+bool isCollision(Bubble* movingBall, Bubble* staticBall);
+bool isExplosion(Bubble* bubble, Bubble staticBalls[]);
+void createNewBall(Bubble* newBubble, int colorNum);
+void drawScreen(Bubble* movingBalls, Bubble staticBalls[]);
+void waitTimer(double second);
+bool checkFreeBall(Bubble* firstBall, Bubble staticBalls[]);
+void checkReset(Bubble staticBalls[]);
+void createButton(Button buttonInfo, int spaceX);
+bool isButtonClicked(Button button);
+void clearArray(int* array);
+
+int staticBallNumber = 0;
+const int radius = 15;
+const float speed = 6;
+const int screenWidth = 600;
+const int screenHeight = 950;
+Vector2 startingPosition = { 300, 831};
+int nextBallNum = 0;
+int holdQueue[NUMBER_OF_STATIC_BALLS];
+int visited[NUMBER_OF_STATIC_BALLS];
+int holdCounter = 0;
+int visitedCounter = 0;
+
+
+int main(void)
+{
+    clearArray(holdQueue);
+    clearArray(visited);
+    InitWindow(screenWidth, screenHeight, "Raylib Top Fırlatmaca");
+    
+    GameScreen currentScreen = screenMenu;
+    Bubble movingBalls[NUMBER_OF_MOVING_BALLS];
+    Bubble staticBalls[NUMBER_OF_STATIC_BALLS];
+
+    movingBalls[nextBallNum] = (Bubble){ 1 + NUMBER_OF_STATIC_BALLS ,{screenWidth / 2, screenHeight * 7 / 8}, {0,0}, false, true , 0 , 0,0, BLUE, SKYBLUE };
+
+    int staticX = radius;
+    int staticY = 60;
+    int row = 0;
+    int counter = 0;
+    bool isExplosionStart = false;
+    bool isFallingStart = false;
+    float timeForWaiting;
+
+    Button infoBtn = {
+        .position = (Vector2) { 550, 10},
+        .size = (Vector2) {40,40},
+        .fontSize = 8,
+        .colorBtn = GRAY,
+        .colorText = BLACK,
+        .text = "i"
+    };
+    Button playBtn = {
+        .position = (Vector2) { 200, 710},
+        .size = (Vector2) {200,40},
+        .fontSize = 8,
+        .colorBtn = GRAY,
+        .colorText = BLACK,
+        .text = "PLAY"
+    };
+    Button quitBtn = {
+        .position = (Vector2) { 200, 830},
+        .size = (Vector2) {200,40},
+        .fontSize = 8,
+        .colorBtn = GRAY,
+        .colorText = BLACK,
+        .text = "QUIT"
+    };
+    Button scoreBtn = {
+        .position = (Vector2) { 200, 770},
+        .size = (Vector2) {200,40},
+        .fontSize = 8,
+        .colorBtn = GRAY,
+        .colorText = BLACK,
+        .text = "SCORES"
+    };
+    
+    for (int i = 0; i < NUMBER_OF_STATIC_BALLS; i++) {
+        staticBalls[i].id = i;
+        staticBalls[i].position.x = staticX;
+        staticBalls[i].position.y = staticY;
+        staticBalls[i].isFalling = false;
+        staticBalls[i].colorNum = GetRandomValue(0,2);
+        staticBalls[i].isChecked = false;
+        switch (staticBalls[i].colorNum)
+        {
+        case 0:
+            staticBalls[i].color = BLUE;
+            staticBalls[i].secondColor = SKYBLUE;
+            break;
+        case 1:
+            staticBalls[i].color = RED;
+            staticBalls[i].secondColor = PINK;
+            break;
+        case 2:
+            staticBalls[i].color = DARKGREEN;
+            staticBalls[i].secondColor = GREEN;
+            break;
+        default:
+            break;
+        }
+        staticBalls[i].isVisible = true;
+        staticX += radius*2 + 2;
+        if (staticX >= screenWidth - radius * 2) {
+            row++;
+            staticY += radius * 2;
+            if (row % 2 == 0)
+                staticX = radius;
+            else
+                staticX = radius*2;
+        }
+    }
+
+    SetTargetFPS(60);
+
+    while (!WindowShouldClose()){
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+        if (currentScreen == screenMenu) {
+            createButton(playBtn, 70);
+            createButton(scoreBtn, 56);
+            createButton(infoBtn, 18);
+            createButton(quitBtn, 70);
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && isButtonClicked(playBtn)) {
+                currentScreen = screenGame;
+            }
+            else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && isButtonClicked(infoBtn)) {
+                currentScreen = screenInfo;
+            }
+            else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && isButtonClicked(quitBtn)) {
+                WindowShouldClose();
+            }
+            else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && isButtonClicked(scoreBtn)) {
+                currentScreen = screenScore;
+            }
+        }
+        else if (currentScreen == screenScore) {
+
+        }
+
+        else if (currentScreen == screenGame) {
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                Vector2 mousePos = GetMousePosition();
+                movingBalls[nextBallNum].velocity = Vector2Subtract(mousePos, movingBalls[nextBallNum].position);
+                float lenght = Vector2Length(movingBalls[nextBallNum].velocity);
+                if (lenght != 0) {
+                    movingBalls[nextBallNum].velocity.x = (movingBalls[nextBallNum].velocity.x / lenght) * speed;
+                    movingBalls[nextBallNum].velocity.y = (movingBalls[nextBallNum].velocity.y / lenght) * speed;
+                    movingBalls[nextBallNum].isMoving = true;
+                }
+            }
+
+            if (movingBalls[nextBallNum].isMoving) {
+                movingBalls[nextBallNum].position = Vector2Add(movingBalls[nextBallNum].position, movingBalls[nextBallNum].velocity);
+            }
+            if (movingBalls[nextBallNum].position.x <= 10 || movingBalls[nextBallNum].position.x >= screenWidth - 10) {
+                movingBalls[nextBallNum].velocity.x *= -1;
+            }
+
+            if (movingBalls[nextBallNum].position.y <= 10 || movingBalls[nextBallNum].position.y >= screenHeight - 10) {
+                movingBalls[nextBallNum].velocity.y *= -1;
+            }
+
+            DrawText(("visitedCounter = %d", visitedCounter), 300, 550, 16, BLACK);
+            DrawText(TextFormat("Top Sayisi: %d, %d", nextBallNum, movingBalls[nextBallNum].colorNum), 5, screenHeight - 35, 30, DARKGRAY);
+            DrawFPS(10, 10);
+            if (isCollision(&movingBalls[nextBallNum], &staticBalls)) {
+                timeForWaiting = 0.0f;
+                isExplosionStart = true;
+
+            }
+            
+            if (isExplosionStart) {
+                timeForWaiting += GetFrameTime();
+                if (timeForWaiting >= 0.35f) {
+                    isExplosion(&movingBalls[nextBallNum], staticBalls);
+                    checkReset(staticBalls);
+                    if (visitedCounter > 3) {
+                        if (timeForWaiting >= 0.4f) {
+                            if (counter <= visitedCounter) {
+                                staticBalls[visited[counter++]].isVisible = false;
+                                timeForWaiting = 0.35f;
+                            }
+                            else {
+                                isExplosionStart = false;
+                                isFallingStart = true;
+                            }
+                        }
+                    }
+                }
+            }
+            drawScreen(&movingBalls[nextBallNum], &staticBalls);
+            if (isFallingStart) {
+                timeForWaiting -= GetFrameTime();
+                if (timeForWaiting <= 0.0f) {
+                    for (int i = 0; i < NUMBER_OF_STATIC_BALLS; i++) {
+                        if (!checkFreeBall(&staticBalls[i], staticBalls)) {
+                            staticBalls[i].isFalling = true;
+                            staticBalls[i].isVisible = false;
+                        }
+                        checkReset(staticBalls);
+                    }
+                    drawScreen(&movingBalls[nextBallNum], &staticBalls);
+                    nextBallNum++;
+                    createNewBall(&movingBalls[nextBallNum], GetRandomValue(0, 2));
+                    isFallingStart = false;
+                }
+            }
+            
+
+
+        }
+        
+        EndDrawing();
+    }
+    CloseWindow();
+
+    return 0;
+}
+bool isButtonClicked(Button button) {
+    Vector2 mousePos = GetMousePosition();
+    if (mousePos.x >= button.position.x && mousePos.x <= button.position.x + button.size.x) {
+        if (mousePos.y >= button.position.y && mousePos.y <= button.position.y + button.size.y) {
+            return true;
+            
+        }
+    }
+    return false;
+}
+void createButton(Button buttonInfo, int spaceX) {
+    Vector2 mousePos = GetMousePosition();
+    int textPosX;
+    int textPosY;
+    Rectangle button = {
+            .x = buttonInfo.position.x,
+            .y = buttonInfo.position.y,
+            .width = buttonInfo.size.x,
+            .height = buttonInfo.size.y };
+    if (mousePos.x >= buttonInfo.position.x && mousePos.x <= buttonInfo.position.x + buttonInfo.size.x
+        && mousePos.y >= buttonInfo.position.y && mousePos.y <= buttonInfo.position.y + buttonInfo.size.y) {
+        buttonInfo.colorBtn = ORANGE;
+        buttonInfo.colorText = BLACK;
+    }
+    textPosX = buttonInfo.position.x + spaceX;
+    textPosY = buttonInfo.position.y + buttonInfo.size.y / 4;
+    DrawRectangleRounded(button, 0.6, 2000, buttonInfo.colorBtn);
+    DrawRectangleRoundedLinesEx(button, 0.6, 2, 3, BLACK);
+    DrawText(buttonInfo.text, textPosX, textPosY, buttonInfo.size.y / 2, buttonInfo.colorText);
+    
+    
+    
+
+}
+
+void createNewBall(Bubble* newBubble, int colorNum) {
+    newBubble->colorNum = colorNum;
+    newBubble->isChecked = false;
+    newBubble->position = startingPosition;
+    newBubble->isVisible = true;
+    newBubble->isMoving = false;
+    newBubble->velocity = (Vector2){ 0,0 };
+    switch (newBubble->colorNum)
+    {
+    case 0:
+        newBubble->color = BLUE;
+        newBubble->secondColor = SKYBLUE;
+        break;
+    case 1:
+        newBubble->color = RED;
+        newBubble->secondColor = PINK;
+        break;
+    case 2:
+        newBubble->color = DARKGREEN;
+        newBubble->secondColor = GREEN;
+        break;
+    default:
+        break;
+    }
+    
+
+}
+bool isCollision(Bubble* movingBall, Bubble* staticBall) {
+    bool result = false;
+    for (int i = 0; i < NUMBER_OF_STATIC_BALLS; i++){
+        if (movingBall->isVisible && staticBall[i].isVisible) {
+            if (CheckCollisionCircles(movingBall->position, radius, staticBall[i].position, radius)) {
+                movingBall->velocity.x = 0;
+                movingBall->velocity.y = 0;
+                movingBall->isMoving = false;
+                if (movingBall->position.x <= staticBall[i].position.x) {
+                    //topun sol altı
+                    if (movingBall->position.y < staticBall[i].position.y + radius) {
+                        movingBall->position.x = staticBall[i].position.x - radius * 2 - 2;
+                        movingBall->position.y = staticBall[i].position.y;
+                    }
+                    //topun sol üstü
+                    else {
+                        movingBall->position.x = staticBall[i].position.x - radius;
+                        movingBall->position.y = staticBall[i].position.y + radius * 2;
+                    }
+                }
+                else {
+                    //topun sağ altı
+                    if (movingBall->position.y < staticBall[i].position.y + +radius) {
+                        movingBall->position.x = staticBall[i].position.x + radius * 2 + 2;
+                        movingBall->position.y = staticBall[i].position.y;
+                    }
+                    //topun sağ üstü
+                    else {
+                        movingBall->position.x = staticBall[i].position.x + radius;
+                        movingBall->position.y = staticBall[i].position.y + radius * 2;
+                    }
+                }
+
+                result = true;
+            }
+        }
+    }
+    return result;
+}
+bool isExplosion(Bubble* firstBubble, Bubble staticBalls[]) {
+    
+    if (!firstBubble->isVisible || firstBubble->isChecked) return false;
+    int tempQueue[6] = { -1,-1,-1,-1,-1,-1 };
+    holdCounter = 0;
+    firstBubble->isChecked = true;
+    bool exploded = false;
+    for (int i = 0; i < NUMBER_OF_STATIC_BALLS; i++) {
+        if (!staticBalls[i].isVisible) continue;
+        Vector2 range = Vector2Subtract(firstBubble->position, staticBalls[i].position);
+        float distance = Vector2Length(range);
+
+        if (distance <= radius * 2 + 5 && firstBubble->colorNum == staticBalls[i].colorNum) {
+            visited[visitedCounter] = firstBubble->id;
+            tempQueue[holdCounter++] = staticBalls[i].id;
+        }
+    }
+    visitedCounter++;
+    int i = 0;
+    while (tempQueue[i] != -1) {
+        isExplosion(&staticBalls[tempQueue[i]], staticBalls);
+        i++;
+    }
+    return exploded;
+}
+void drawScreen(Bubble* movingBalls, Bubble staticBalls[]) {
+
+    DrawLine(0, 60 - radius, screenWidth, 60 - radius, BLANK);
+    if (movingBalls->isVisible) {
+        DrawCircleGradient(movingBalls->position.x, movingBalls->position.y, radius, movingBalls->secondColor, movingBalls->color);
+        DrawCircleLinesV(movingBalls->position, radius, BLACK);
+
+    }
+    for (int i = 0; i < NUMBER_OF_STATIC_BALLS; i++) {
+
+        if (staticBalls[i].isVisible) {
+            DrawCircleGradient(staticBalls[i].position.x, staticBalls[i].position.y, radius, staticBalls[i].secondColor, staticBalls[i].color);
+            DrawCircleLinesV(staticBalls[i].position, radius, BLACK);
+        }
+        else {
+            if (staticBalls[i].isFalling) {
+                if (!staticBalls[i].isMoving) {
+                    staticBalls[i].velocity = (Vector2){ GetRandomValue(-2,2) ,1 };
+                    staticBalls[i].isMoving = true;
+                }
+                if (staticBalls[i].position.y > screenHeight + radius * 2) {
+                    staticBalls[i].velocity = (Vector2){ 0,0 };
+                    DrawCircleGradient(staticBalls[i].position.x, staticBalls[i].position.y, radius, staticBalls[i].secondColor, staticBalls[i].color);
+                    DrawCircleLinesV(staticBalls[i].position, radius, BLACK);
+                }
+                else {
+                    staticBalls[i].position = Vector2Add(staticBalls[i].position, staticBalls[i].velocity);
+                    staticBalls[i].position.y *= 1.03;
+                    staticBalls[i].position.x *= 0.99;
+                    DrawCircleGradient(staticBalls[i].position.x, staticBalls[i].position.y, radius, staticBalls[i].secondColor, staticBalls[i].color);
+                    DrawCircleLinesV(staticBalls[i].position, radius, BLACK);
+                }
+            }
+            else{
+                //BURADASIN DİREKT PATLAYAN TOPLARIN RENKLERİNİ SOLDURUP YOK EDECEKSİN
+                staticBalls[i].position = Vector2Add(staticBalls[i].position, staticBalls[i].velocity);
+                staticBalls[i].position.y *= 1.03;
+                staticBalls[i].position.x *= 0.99;
+                DrawCircleGradient(staticBalls[i].position.x, staticBalls[i].position.y, radius, staticBalls[i].secondColor, staticBalls[i].color);
+                DrawCircleLinesV(staticBalls[i].position, radius, BLACK);
+            }
+            
+        }
+    }
+}
+void waitTimer(double second) {
+    float waitTimer = 0.5f;
+}
+bool checkFreeBall(Bubble* firstBall, Bubble staticBalls[]) {
+    if (CheckCollisionCircleLine(firstBall->position, radius + 3, (Vector2) { 0, 60 }, (Vector2) { screenWidth, 60 })) {
+        return true;
+    }
+    else{
+        for (int i = 0; i < NUMBER_OF_STATIC_BALLS; i++) {
+            if (staticBalls[i].isChecked || !staticBalls[i].isVisible) {
+                continue;
+            }
+            if (CheckCollisionCircles(firstBall->position, radius + 3, staticBalls[i].position, radius + 3)) {
+                firstBall->isChecked = true;
+                if (checkFreeBall(&staticBalls[i], staticBalls)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+void clearArray(int* array) {
+    for (int i = 0; i < NUMBER_OF_STATIC_BALLS; i++) {
+        array[i] = -1;
+    }
+}
+
+void checkReset(Bubble staticBalls[]) {
+    for (int i = 0; i < NUMBER_OF_STATIC_BALLS; i++){
+        staticBalls[i].isChecked = false;
+    }
+}
