@@ -3,9 +3,9 @@
 #include <math.h>
 #include <stdio.h>
 
-#define NUMBER_OF_STATIC_BALLS 180
-#define NUMBER_OF_MOVING_BALLS 15
 
+#define MAX_MOVING_BUBBLES 30
+#define MAX_STATIC_BUBBLE 400
 
 typedef enum {
     screenMenu,
@@ -37,7 +37,7 @@ typedef struct {
     int fontSize;
 } Button;
 
-void addStaticBalls(Bubble* movingBall);
+void addStaticBalls(Bubble* movingBall, Bubble staticBalls[]);
 bool isCollision(Bubble* movingBall, Bubble* staticBall);
 bool isExplosion(Bubble* bubble, Bubble staticBalls[]);
 void createNewBall(Bubble* newBubble, int colorNum);
@@ -47,37 +47,55 @@ bool checkFreeBall(Bubble* firstBall, Bubble staticBalls[]);
 void checkReset(Bubble staticBalls[]);
 void createButton(Button buttonInfo, int spaceX);
 bool isButtonClicked(Button button);
-void clearArray(int* array);
+void clearArray(int* array, int size);
 int indexCounter(int* a, int sizeOfArray);
 int currenBallCounter(Bubble staticBalls[]);
 int calculateScore(Bubble staticBalls[]);
 void updateBalls(Bubble staticBalls[]);
+void currentBallColors(int currenColors[], Bubble staticBalls[]);
 
-Bubble movingBalls[NUMBER_OF_MOVING_BALLS];
-Bubble staticBalls[NUMBER_OF_STATIC_BALLS + NUMBER_OF_MOVING_BALLS];
-int staticBallNumber = 0;
+
 const int radius = 20;
 const float speed = 12;
 const int screenWidth = 600;
 const int screenHeight = 950;
 Vector2 startingPosition = { 300, 831 };
 int nextBallNum = 0;
-int expQue[NUMBER_OF_STATIC_BALLS];
+int expQue[200];
 int queCounter = 0;
-int numberOfGameBalls = NUMBER_OF_STATIC_BALLS;
+int numberOfGameBalls = MAX_STATIC_BUBBLE;
+bool isBallReady = true;
 
 int main(void)
 {
-    int colorOfBubbles[NUMBER_OF_STATIC_BALLS];
-    for (int i = 0; i < NUMBER_OF_STATIC_BALLS; i++){
-        colorOfBubbles[i] = GetRandomValue(0, 2);
-    }
-    int scoreTableValues[10][2] = { {10000,10},{9400,8}, {8000,7}, {7800,7}, {7500,7}, {7200,7}, {6600,5}, {3800,4}, {2000,2}, {1200,1} };
-    InitWindow(screenWidth, screenHeight, "Bubble Shooter");
-    clearArray(expQue);
-    GameScreen currentScreen = screenMenu;
+    FILE* fPtr = NULL;
+    
+    int staticBallNum = 0;
+    int movingBallsNum = 0;
+    int arrayOfLevel[MAX_STATIC_BUBBLE];
+    clearArray(arrayOfLevel,MAX_STATIC_BUBBLE);
 
-    movingBalls[nextBallNum] = (Bubble){ {screenWidth / 2, screenHeight * 7 / 8}, {0,0}, false, true , 0 , 0,0, BLUE, SKYBLUE };
+    if (fopen_s(&fPtr, "level2.txt", "r") == 0) {
+        printf("dosyaya ulaşıldı!");
+        fscanf_s(fPtr, "%d", &staticBallNum);
+        fscanf_s(fPtr, "%d", &movingBallsNum);
+        for (int i = 0; i < staticBallNum; i++) {
+            fscanf_s(fPtr, "%d", &arrayOfLevel[i]);
+            printf("%d", arrayOfLevel[i]);
+        }
+    }
+    else {
+        printf("dosya okunamadı!");
+    }
+
+    InitWindow(screenWidth, screenHeight, "Bubble Shooter");
+    InitAudioDevice();
+    
+    int scoreTableValues[10][2] = { {10000,10},{9400,8}, {8000,7}, {7800,7}, {7500,7}, {7200,7}, {6600,5}, {3800,4}, {2000,2}, {1200,1} };
+    
+    clearArray(expQue,200);
+
+    GameScreen currentScreen = screenMenu;
 
     Texture2D background = LoadTexture("arkaplan.png");
     Texture2D mainMenu = LoadTexture("mainmenu.png");
@@ -85,23 +103,34 @@ int main(void)
     Texture2D returnMenu = LoadTexture("returnMenu.png");
     Texture2D infoPage = LoadTexture("infoPage.png");
     Texture2D topBar = LoadTexture("topBar.png");
+    Texture2D changeBall = LoadTexture("changeBall.png");
+
+    Sound bubbleExpSound = LoadSound("pop.mp3");
+    Sound clickSound = LoadSound("clickSound.mp3");
+
+    Bubble movingBalls[MAX_MOVING_BUBBLES];
+    Bubble staticBalls[MAX_STATIC_BUBBLE + MAX_MOVING_BUBBLES];
+
+    movingBalls[nextBallNum] = (Bubble){ {screenWidth / 2, screenHeight * 7 / 8}, {0,0}, false, true , 0 , 0,0, BLUE, SKYBLUE };
+
     int score = 0;
-    int staticX = radius + 5;
-    int staticY = 20*radius + 70;
+    int staticX = radius +1;
+    int staticY = 20 * radius + 70;
     int row = 0;
     int counter = 0;
+    int arrayOfCurrenColors[3] = { -1, -1, -1 };
     bool isUpdateStart = false;
     bool isExplosionStart = false;
     bool isFallingStart = false;
     bool isOrganised = false;
-    bool isBallReady = true;
-    float timeForWaiting;
+    bool giveNewBall = false;
+    float timeForWaiting = 0.0f;
 
     Button infoBtn = {
         .position = (Vector2) { 160, 800},
         .size = (Vector2) {280,45},
         .fontSize = 30,
-        .colorBtn = GRAY,
+        .colorBtn = ColorFromHSV(0.0f, 0.0f, 0.6f),
         .colorText = BLACK,
         .text = "INFORMATION"
     };
@@ -131,12 +160,27 @@ int main(void)
     };
 
     //topların oluşturulması
-    for (int i = 0; i < NUMBER_OF_STATIC_BALLS; i++) {
+    for (int i = 0; i < MAX_STATIC_BUBBLE; i++) {
+        staticBalls[i].colorNum = arrayOfLevel[i];
+        if (staticBalls[i].colorNum == -1) {
+            staticBalls[i].isVisible = false;
+            continue;
+        }
         staticBalls[i].position.x = staticX;
         staticBalls[i].position.y = staticY;
         staticBalls[i].isFalling = false;
-        staticBalls[i].colorNum = colorOfBubbles[i];
+        staticBalls[i].isMoving = false;
         staticBalls[i].isChecked = false;
+        staticBalls[i].isVisible = true;
+        staticX += radius * 2 + 3;
+        if (staticX > screenWidth - 5) {
+            row++;
+            staticY -= radius * 2;
+            if (row % 2 == 0)
+                staticX = radius + 1;
+            else
+                staticX = radius * 2 + 1;
+        }
         switch (staticBalls[i].colorNum)
         {
         case 0:
@@ -151,19 +195,18 @@ int main(void)
             staticBalls[i].color = DARKGREEN;
             staticBalls[i].secondColor = GREEN;
             break;
+        case 3:
+            staticBalls[i].color = BLACK;
+            staticBalls[i].secondColor = GRAY;
+            break;
+        case 4:
+            staticBalls[i].isVisible = false;
+            staticBalls[i].position = (Vector2){ 0,950 };
+            break;
         default:
             break;
         }
-        staticBalls[i].isVisible = true;
-        staticX += radius * 2 + 3;
-        if (staticX > screenWidth - radius) {
-            row++;
-            staticY -= radius * 2;
-            if (row % 2 == 0)
-                staticX = radius + 5;
-            else
-                staticX = radius * 2 + 5;
-        }
+        
     }
 
     SetTargetFPS(60);
@@ -178,16 +221,20 @@ int main(void)
             createButton(infoBtn, 32);
             createButton(quitBtn, 105);
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && isButtonClicked(playBtn)) {
+                PlaySound(clickSound);
                 currentScreen = screenGame;
             }
             else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && isButtonClicked(infoBtn)) {
+                PlaySound(clickSound);
                 currentScreen = screenInfo;
             }
             else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && isButtonClicked(quitBtn)) {
+                PlaySound(clickSound);
                 CloseWindow();
                 return 0;
             }
             else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && isButtonClicked(scoreBtn)) {
+                PlaySound(clickSound);
                 currentScreen = screenScore;
             }
         }
@@ -232,65 +279,40 @@ int main(void)
 
             DrawText(TextFormat("SCORES"), 210, 25, 48, WHITE);
         }
-
         else if (currentScreen == screenGame) {
 
             DrawTexture(background, 0, 0, WHITE);
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && isBallReady) {
-                isBallReady = false;
-                Vector2 mousePos = GetMousePosition();
-                movingBalls[nextBallNum].velocity = Vector2Subtract(mousePos, movingBalls[nextBallNum].position);
-                float lenght = Vector2Length(movingBalls[nextBallNum].velocity);
-                if (lenght != 0) {
-                    movingBalls[nextBallNum].velocity.x = (movingBalls[nextBallNum].velocity.x / lenght) * speed;
-                    movingBalls[nextBallNum].velocity.y = (movingBalls[nextBallNum].velocity.y / lenght) * speed;
-                    movingBalls[nextBallNum].isMoving = true;
-                }
-            }
-
-            if (movingBalls[nextBallNum].isMoving) {
-                movingBalls[nextBallNum].position = Vector2Add(movingBalls[nextBallNum].position, movingBalls[nextBallNum].velocity);
-            }
-            if (movingBalls[nextBallNum].position.x <= 10 || movingBalls[nextBallNum].position.x >= screenWidth - 10) {
-                movingBalls[nextBallNum].velocity.x *= -1;
-            }
-
-            if (movingBalls[nextBallNum].position.y <= 10 || movingBalls[nextBallNum].position.y >= screenHeight - 10) {
-                movingBalls[nextBallNum].velocity.y *= -1;
-            }
 
             DrawText(TextFormat("Top Sayisi: %d, %d", nextBallNum, movingBalls[nextBallNum].colorNum), 5, screenHeight - 35, 30, DARKGRAY);
-            DrawText(TextFormat("12"), startingPosition.x - 7, startingPosition.y + 30, 20, (Color) { 230, 220, 255, 255 } );
+            DrawText(TextFormat("%d",movingBallsNum), startingPosition.x - 7, startingPosition.y + 30, 20, (Color) { 230, 220, 255, 255 } );
 
 
             DrawFPS(10, 10);
             if (isCollision(&movingBalls[nextBallNum], staticBalls)) {
-                if (staticBalls[0].isVisible)
-                    printf("Bubble(0) is visible, %d ve %d position\n",staticBalls[0].position.x,staticBalls[0].position.y);
-
-                timeForWaiting = 0.0f;
+                movingBallsNum--;
+                timeForWaiting = 0.3f;
                 isExplosionStart = true;
-                addStaticBalls(&movingBalls[nextBallNum]);
+                addStaticBalls(&movingBalls[nextBallNum],staticBalls);
             }
-            drawScreen(&movingBalls[nextBallNum], &staticBalls);
 
+            drawScreen(&movingBalls[nextBallNum], &staticBalls);
             //expQue son hali oluştu
             if (isExplosionStart) {
                 timeForWaiting += GetFrameTime();
+
                 if (timeForWaiting >= 0.5f) {
-                    printf("Bubble(0) is visible, %d ve %d position\n", staticBalls[0].position.x, staticBalls[0].position.y);
-                    if (isExplosion(&staticBalls[NUMBER_OF_STATIC_BALLS + nextBallNum], staticBalls)) {
-                        for (int i = 0; i < NUMBER_OF_STATIC_BALLS; i++){
+                    if (isExplosion(&staticBalls[MAX_STATIC_BUBBLE + nextBallNum], staticBalls)) {
+                        for (int i = 0; i < numberOfGameBalls; i++){
                             if (expQue[i] == -1) {
                                 break;
                             }
                             isExplosion(&staticBalls[expQue[i]], staticBalls);
                         }
-                        for (int i = 0; i < NUMBER_OF_STATIC_BALLS; i++) {
+                        for (int i = 0; i < 200; i++) {
                             printf("%d ,", expQue[i]);
                         }
+                        printf("\n");
                     }
-                    printf("Bubble(0) is visible, %d ve %d position\n", staticBalls[0].position.x, staticBalls[0].position.y);
                     queCounter = 0;
                     checkReset(staticBalls);
                     isExplosionStart = false;
@@ -300,15 +322,21 @@ int main(void)
             //expQue yu kontrol ettikten sonra içine gir
             if (isFallingStart) {
 
-                if (indexCounter(expQue, NUMBER_OF_STATIC_BALLS) >= 3) {
+                if (indexCounter(expQue, 200) >= 3) {
                     timeForWaiting += GetFrameTime();
-                    staticBalls[NUMBER_OF_STATIC_BALLS + nextBallNum].isVisible = false;
+                    if (staticBalls[MAX_STATIC_BUBBLE + nextBallNum].isVisible) {
+                        PlaySound(bubbleExpSound);
+                    }
+                    staticBalls[MAX_STATIC_BUBBLE + nextBallNum].isVisible = false;
+                    
                     if (timeForWaiting >= 0.6f) {
                         if (expQue[counter] != -1) {
                             if (!(staticBalls[expQue[counter]].isVisible)) {
                                 counter++;
                             }
                             else {
+                                PlaySound(bubbleExpSound);
+                                staticBalls[expQue[counter]].isFalling = true;
                                 staticBalls[expQue[counter]].isVisible = false;
                                 counter++;
                                 timeForWaiting = 0.50f;
@@ -322,15 +350,23 @@ int main(void)
                             isUpdateStart = true;
                         }
                     }
-                    
                 }
 
                 else {
-
-                    printf("Bubble(0) is visible, %d ve %d position\n", staticBalls[0].position.x, staticBalls[0].position.y);
-                    clearArray(expQue);
-
-                    printf("Bubble(0) is visible, %d ve %d position\n", staticBalls[0].position.x, staticBalls[0].position.y);
+                    clearArray(expQue,200);
+                    clearArray(arrayOfCurrenColors, 3);
+                    currentBallColors(arrayOfCurrenColors, staticBalls);
+                    int hold = 0;
+                    for (int i = 0; i < 3;i++){
+                        printf("%d, ", arrayOfCurrenColors[i]);
+                    }
+                    printf("\n");
+                    while (1) {
+                        if (arrayOfCurrenColors[GetRandomValue(0, 2)] != -1) {
+                            hold = arrayOfCurrenColors[GetRandomValue(0, 2)];
+                            break;
+                        }
+                    }
                     createNewBall(&movingBalls[++nextBallNum], GetRandomValue(0, 2));
                     isFallingStart = false;
                     isOrganised = true;
@@ -346,7 +382,21 @@ int main(void)
                         }
                         checkReset(staticBalls);
                     }
-                    clearArray(expQue);
+                    clearArray(expQue,200);
+                    printf("create new ball");
+                    clearArray(arrayOfCurrenColors, 3);
+                    currentBallColors(arrayOfCurrenColors, staticBalls);
+                    int hold = 0;
+                    for (int i = 0; i < 3;i++) {
+                        printf("%d, ", arrayOfCurrenColors[i]);
+                    }
+                    printf("\n");
+                    while (1) {
+                        if (arrayOfCurrenColors[GetRandomValue(0, 2)] != -1) {
+                            hold = arrayOfCurrenColors[GetRandomValue(0, 2)];
+                            break;
+                        }
+                    }
                     createNewBall(&movingBalls[++nextBallNum], GetRandomValue(0, 2));
                     isUpdateStart = false;
                     isOrganised = true;
@@ -357,25 +407,33 @@ int main(void)
                 if (timeForWaiting >= 0.50f) {
                     updateBalls(staticBalls);
                     int highestY = 0;
+                    int lowestY = 500;
                     for (int i = 0; i < numberOfGameBalls; i++) {
                         if (staticBalls[i].isVisible && staticBalls[i].position.y > highestY)
                             highestY = staticBalls[i].position.y;
                     }
-                    if (highestY >= radius * 20 + 70) {
+                    for (int i = 0; i < numberOfGameBalls; i++) {
+                        if (staticBalls[i].isVisible && staticBalls[i].position.y < lowestY)
+                            lowestY = staticBalls[i].position.y;
+                    }
+                    if (highestY >= radius * 20 + 70 || lowestY > 75) {
                         isOrganised = false;
                     }
                     timeForWaiting = 0.40f;
                     isBallReady = true;
                 }
             }
+            DrawTexture(changeBall, 281, startingPosition.y + 24, WHITE);
             DrawTexture(topBar, 0, 0, WHITE);DrawText(TextFormat("%d", currenBallCounter(staticBalls)), 90, 35, 20, WHITE);
             DrawText(TextFormat("SCORE"), 480, 25, 20, WHITE);
             DrawText(TextFormat("LEVEL %d", 1), 255, 15, 20, WHITE);
             DrawText(TextFormat("%d", calculateScore(staticBalls)), 495, 50, 20, WHITE);
+            DrawFPS(10, 10);
         }
         EndDrawing();
     }
     CloseWindow();
+    CloseAudioDevice();
 
     return 0;
 }
@@ -404,6 +462,7 @@ void createButton(Button buttonInfo, int spaceX) {
         buttonInfo.colorBtn = (Color){ 230, 220, 255, 255 };
         buttonInfo.colorText = BLACK;
     }
+
     textPosX = buttonInfo.position.x + spaceX;
     textPosY = buttonInfo.position.y + buttonInfo.size.y / 4 ;
     DrawRectangleRounded(button, 0.6, 2000, buttonInfo.colorBtn);
@@ -414,7 +473,6 @@ void createButton(Button buttonInfo, int spaceX) {
 
 
 }
-
 void createNewBall(Bubble* newBubble, int colorNum) {
     newBubble->colorNum = colorNum;
     newBubble->isChecked = false;
@@ -478,17 +536,15 @@ bool isCollision(Bubble* movingBall, Bubble* staticBall) {
     }
     return result;
 }
-
 bool isExplosion(Bubble* firstBubble, Bubble staticBalls[]) {
+
     if (!firstBubble->isVisible || firstBubble->isChecked) return false;
     firstBubble->isChecked = true;
     bool exploded = false;
-
     for (int i = 0; i < numberOfGameBalls; i++) {
         if (!staticBalls[i].isVisible) continue;
         Vector2 range = Vector2Subtract(firstBubble->position, staticBalls[i].position);
         float distance = Vector2Length(range);
-
         if (distance <= radius * 2 + radius && firstBubble->colorNum == staticBalls[i].colorNum && !staticBalls[i].isChecked) {
             expQue[queCounter++] = i;
             exploded = true;
@@ -502,21 +558,41 @@ bool isExplosion(Bubble* firstBubble, Bubble staticBalls[]) {
 }
 void drawScreen(Bubble* movingBalls, Bubble staticBalls[]) {
 
-    /*Vector2 mousePos = GetMousePosition();
-    if (!(movingBalls->isMoving) && mousePos.y < startingPosition.y - 30 && movingBalls->isVisible) {
-        Vector2 aim = Vector2Subtract(mousePos, startingPosition);
-        float lenghtOfAim = Vector2Length(aim);
-        aim = (Vector2){ (aim.x / lenghtOfAim) * 1,(aim.y / lenghtOfAim) * 1 };
-        DrawLineV(startingPosition, aim, GRAY);
-        
-        DrawText(TextFormat("nextbullnum : %d", nextBallNum), 20, 550, 16, WHITE);
-    }*/
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && isBallReady) {
+        Vector2 mousePos = GetMousePosition();
+        if (mousePos.y < 800) {
+            
+            isBallReady = false;
+            movingBalls->velocity = Vector2Subtract(mousePos, movingBalls->position);
+            float lenght = Vector2Length(movingBalls->velocity);
+            if (lenght != 0) {
+                movingBalls->velocity.x = (movingBalls->velocity.x / lenght) * speed;
+                movingBalls->velocity.y = (movingBalls->velocity.y / lenght) * speed;
+                movingBalls->isMoving = true;
+            }
+        }
+        else {
+        }
+    }
+
+    if (movingBalls->isMoving) {
+        movingBalls->position = Vector2Add(movingBalls->position, movingBalls->velocity);
+    }
+    if (movingBalls->position.x <= 10 || movingBalls->position.x >= screenWidth - 10) {
+        movingBalls->velocity.x *= -1;
+    }
+    if (movingBalls->position.y <= 10 || movingBalls->position.y >= screenHeight - 10) {
+        movingBalls->velocity.y *= -1;
+    }
+
     if (movingBalls->isVisible) {
         DrawCircleGradient(movingBalls->position.x, movingBalls->position.y, radius, movingBalls->secondColor, movingBalls->color);
         DrawCircleLinesV(movingBalls->position, radius, BLACK); 
-
     }
+
     for (int i = 0; i < numberOfGameBalls; i++) {
+        if (staticBalls[i].colorNum == -1)
+            continue;
 
         if (staticBalls[i].isVisible) {
             DrawCircleGradient(staticBalls[i].position.x, staticBalls[i].position.y, radius, staticBalls[i].secondColor, staticBalls[i].color);
@@ -536,8 +612,8 @@ void drawScreen(Bubble* movingBalls, Bubble staticBalls[]) {
                 }
                 else {
                     staticBalls[i].position = Vector2Add(staticBalls[i].position, staticBalls[i].velocity);
-                    staticBalls[i].position.y *= 1.02;
-                    staticBalls[i].position.x *= 0.99;
+                    staticBalls[i].position.y *= 1.027;
+                    staticBalls[i].position.x *= 0.985;
                     DrawCircleGradient(staticBalls[i].position.x, staticBalls[i].position.y, radius, staticBalls[i].secondColor, staticBalls[i].color);
                     DrawCircleLinesV(staticBalls[i].position, radius, BLACK);
                 }
@@ -545,14 +621,14 @@ void drawScreen(Bubble* movingBalls, Bubble staticBalls[]) {
             else {
                 //BURADASIN DİREKT PATLAYAN TOPLARIN RENKLERİNİ SOLDURUP YOK EDECEKSİN
                 staticBalls[i].position = Vector2Add(staticBalls[i].position, staticBalls[i].velocity);
-                staticBalls[i].position.y *= 1.02;
-                staticBalls[i].position.x *= 0.99;
+                staticBalls[i].position.y *= 1.027;
+                staticBalls[i].position.x *= 0.985;
                 DrawCircleGradient(staticBalls[i].position.x, staticBalls[i].position.y, radius, staticBalls[i].secondColor, staticBalls[i].color);
                 DrawCircleLinesV(staticBalls[i].position, radius, BLACK);
             }
 
         }
-        
+
     }
 }
 void waitTimer(double second) {
@@ -564,7 +640,7 @@ bool checkFreeBall(Bubble* firstBall, Bubble staticBalls[]) {
     }
     else {
         for (int i = 0; i < numberOfGameBalls; i++) {
-            if (staticBalls[i].isChecked || !staticBalls[i].isVisible) {
+            if (staticBalls[i].isChecked || !staticBalls[i].isVisible || staticBalls[i].colorNum == -1) {
                 continue;
             }
             if (CheckCollisionCircles(firstBall->position, radius + radius/3, staticBalls[i].position, radius + radius/3)) {
@@ -577,31 +653,28 @@ bool checkFreeBall(Bubble* firstBall, Bubble staticBalls[]) {
     }
     return false;
 }
-void clearArray(int* array) {
-    for (int i = 0; i < NUMBER_OF_STATIC_BALLS; i++) {
+void clearArray(int* array, int size) {
+    for (int i = 0; i < size; i++) {
         array[i] = -1;
     }
 }
-
-
 void checkReset(Bubble staticBalls[]) {
     for (int i = 0; i < numberOfGameBalls; i++) {
         staticBalls[i].isChecked = false;
     }
 }
-
-void addStaticBalls(Bubble* movingBall) {
-    numberOfGameBalls++;
+void addStaticBalls(Bubble* movingBall, Bubble staticBalls[]) {
     movingBall->isVisible = false;
-    staticBalls[NUMBER_OF_STATIC_BALLS + nextBallNum].position = movingBall->position;
-    staticBalls[NUMBER_OF_STATIC_BALLS + nextBallNum].isVisible = true;
-    staticBalls[NUMBER_OF_STATIC_BALLS + nextBallNum].isChecked = false;
-    staticBalls[NUMBER_OF_STATIC_BALLS + nextBallNum].isFalling = false;
-    staticBalls[NUMBER_OF_STATIC_BALLS + nextBallNum].isMoving = false;
-    staticBalls[NUMBER_OF_STATIC_BALLS + nextBallNum].color = movingBall->color;
-    staticBalls[NUMBER_OF_STATIC_BALLS + nextBallNum].colorNum = movingBall->colorNum;
-    staticBalls[NUMBER_OF_STATIC_BALLS + nextBallNum].secondColor = movingBall->secondColor;
-    staticBalls[NUMBER_OF_STATIC_BALLS + nextBallNum].velocity = (Vector2) { 0,0 };
+    staticBalls[MAX_STATIC_BUBBLE + nextBallNum].position = movingBall->position;
+    staticBalls[MAX_STATIC_BUBBLE + nextBallNum].isVisible = true;
+    staticBalls[MAX_STATIC_BUBBLE + nextBallNum].isChecked = false;
+    staticBalls[MAX_STATIC_BUBBLE + nextBallNum].isFalling = false;
+    staticBalls[MAX_STATIC_BUBBLE + nextBallNum].isMoving = false;
+    staticBalls[MAX_STATIC_BUBBLE + nextBallNum].color = movingBall->color;
+    staticBalls[MAX_STATIC_BUBBLE + nextBallNum].colorNum = movingBall->colorNum;
+    staticBalls[MAX_STATIC_BUBBLE + nextBallNum].secondColor = movingBall->secondColor;
+    staticBalls[MAX_STATIC_BUBBLE + nextBallNum].velocity = (Vector2) { 0,0 };
+    numberOfGameBalls++;
 }
 int indexCounter(int* array, int sizeOfArray) {
     int counter = 0;
@@ -634,7 +707,7 @@ int calculateScore(Bubble staticBalls[]) {
 void updateBalls(Bubble staticBalls[]) {
     int highestPos = 0;
     int lowestPos = 500;
-    for (int i = numberOfGameBalls - 1; i >= 0; i--) {
+    for (int i = 0; i < numberOfGameBalls; i++) {
         if (staticBalls[i].isVisible && staticBalls[i].position.y > highestPos) {
             highestPos = staticBalls[i].position.y;
         }
@@ -649,10 +722,28 @@ void updateBalls(Bubble staticBalls[]) {
             staticBalls[i].position.y -= radius * 2;
         }
     }
-    if (highestPos < 20 * radius + 70 && lowestPos <= 70) {
+    if (highestPos < 20 * radius + 70 && lowestPos < 80) {
         for (int i = 0; i < numberOfGameBalls; i++) {
             staticBalls[i].position.y += radius * 2;
         }
-        
+    }
+}
+void currentBallColors(int currentColors[], Bubble staticBalls[]) {
+    bool isThere = false;
+    int counter = 0;
+    for (int i = 0; i < numberOfGameBalls; i++) {
+        if (staticBalls[i].isVisible && staticBalls[i].position.y > 70 && staticBalls[i].colorNum != 3) {
+            for (int j = 0; j < 3;j++) {
+                if (currentColors[j] == staticBalls[i].colorNum) {
+                    isThere = true;
+                    break;
+                }
+            }
+            if (!isThere && counter < 3) {
+                currentColors[counter] = staticBalls[i].colorNum;
+                counter++;
+            }
+            isThere = false;
+        }
     }
 }
