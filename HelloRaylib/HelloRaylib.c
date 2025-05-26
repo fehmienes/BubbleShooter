@@ -1,4 +1,4 @@
-#include "raylib.h"
+﻿#include "raylib.h"
 #include "raymath.h"
 #include <math.h>
 #include <stdio.h>
@@ -13,7 +13,8 @@ typedef enum {
     screenInfo,
     screenLevel,
     screenGame,
-    screenOver
+    screenOver,
+    screenPause
 } GameScreen;
 
 typedef struct {
@@ -58,6 +59,7 @@ void newLevel(int arrayOfLevel[], int level, Bubble staticBalls[]);
 void resetStaticBalls(Bubble staticBalls[]);
 void addSecondBall(Bubble *secondBall, int colorNum);
 void swapColors(Bubble* firstBall, Bubble* secondBall);
+void drawScoreBar(Bubble staticBalls[], Rectangle scoreBar, Texture2D freeStar, Texture2D goldStar);
 
 int staticBallNum = 0;
 int movingBallsNum = 0;
@@ -93,6 +95,9 @@ int main(void)
     Texture2D infoPage = LoadTexture("infoPage.png");
     Texture2D topBar = LoadTexture("topBar.png");
     Texture2D changeBall = LoadTexture("changeBall.png");
+    Texture2D freeStar = LoadTexture("freeStar.png");
+    Texture2D goldStar = LoadTexture("goldStar.png");
+
 
     Sound bubbleExpSound = LoadSound("pop.mp3");
     Sound clickSound = LoadSound("clickSound.mp3");
@@ -104,6 +109,19 @@ int main(void)
     Bubble secondBall;
 
     Color textColor = WHITE;
+
+    Rectangle scoreBar = {
+        .x = 200,
+        .y = 60,
+        .width = 200,
+        .height = 8
+    };
+    Rectangle pauseMenu = {
+        .x = 20,
+        .y = screenHeight / 2 - 170,
+        .width = 560,
+        .height = 340
+    };
 
     movingBalls[nextBallNum] = (Bubble){ {screenWidth / 2, screenHeight * 7 / 8}, {0,0}, false, true ,0, 0 , 0,0, BLUE, SKYBLUE };
     secondBall = (Bubble){ {startingPosition.x, startingPosition.y +80}, {0,0}, false, true ,0, 0 , 0, 1, RED, PINK };
@@ -153,12 +171,45 @@ int main(void)
         .colorText = BLACK,
         .text = "SCORES"
     };
+    Button continueGame = {
+        .position = (Vector2) { screenWidth / 2 - 200, screenHeight / 2 + 100},
+        .size = (Vector2) {180,40},
+        .fontSize = 24,
+        .colorBtn = ColorFromHSV(0.0f, 0.0f, 0.6f),
+        .colorText = BLACK,
+        .text = "Continue"
+    };
+    Button backMenu = {
+        .position = (Vector2) { screenWidth / 2 + 20, screenHeight / 2 + 100},
+        .size = (Vector2) {180,40},
+        .fontSize = 24,
+        .colorBtn = ColorFromHSV(0.0f, 0.0f, 0.6f),
+        .colorText = BLACK,
+        .text = "Menu"
+    };
+    Button restartGame = {
+        .position = (Vector2) { screenWidth / 2 + 20, screenHeight / 2 + 100},
+        .size = (Vector2) {180,40},
+        .fontSize = 24,
+        .colorBtn = ColorFromHSV(0.0f, 0.0f, 0.6f),
+        .colorText = BLACK,
+        .text = "Menu"
+    };
+    Button infoOnPause = {
+        .position = (Vector2) { screenWidth / 2 - 90, screenHeight / 2 },
+        .size = (Vector2) {180,40},
+        .fontSize = 24,
+        .colorBtn = ColorFromHSV(0.0f, 0.0f, 0.6f),
+        .colorText = BLACK,
+        .text = "Menu"
+    };
 
     newLevel(arrayOfLevel, level, staticBalls);
     SetTargetFPS(60);
 
     //PlaySound(music);
     while (!WindowShouldClose()) {
+        
         BeginDrawing();
         ClearBackground(RAYWHITE);
         if (currentScreen == screenMenu) {
@@ -214,7 +265,6 @@ int main(void)
                     break;
                 case 2:
                     textColor = ColorFromHSV(25.0f, 0.75f, 0.65f);
-
                     break;
                 default:
                     textColor = ColorFromHSV(0.0f, 0.0f, 0.75f);
@@ -226,30 +276,53 @@ int main(void)
 
             DrawText(TextFormat("SCORES"), 210, 25, 48, WHITE);
         }
+        else if (currentScreen == screenPause) {
+
+            DrawTexture(background, 0, 0, WHITE);
+            DrawRectangleRounded(pauseMenu, 0.1, 2, GRAY);
+            //DrawText(TextFormat("PAUSE"))
+            createButton(continueGame, 10);
+            createButton(backMenu, 30);
+            createButton(infoOnPause, 30);
+            createButton(restartGame, 30);
+
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && isButtonClicked(continueGame)) {
+                PlaySound(clickSound);
+                currentScreen = screenGame;
+            }
+            else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && isButtonClicked(backMenu)) {
+                PlaySound(clickSound);
+                currentScreen = screenMenu;
+            }
+        }
+
         else if (currentScreen == screenGame) {
             DrawTexture(background, 0, 0, WHITE);
             DrawText(TextFormat("Top Sayisi: %d, %d", nextBallNum, movingBalls[nextBallNum].colorNum), 5, screenHeight - 35, 30, DARKGRAY);
-            DrawText(TextFormat("%d",movingBallsNum), startingPosition.x - 7, startingPosition.y + 30, 20, (Color) { 230, 220, 255, 255 } );
+            DrawTexture(changeBall, 236, startingPosition.y - 23, WHITE);
+            //DrawText(TextFormat("%d",movingBallsNum), startingPosition.x - 7, startingPosition.y + 30, 20, (Color) { 230, 220, 255, 255 } );
             DrawFPS(10, 10);
             if (!movingBalls[nextBallNum].isMoving) {
                 if (IsKeyPressed(KEY_R) || (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && GetMousePosition().y > 800)) {
                     swapColors(&movingBalls[nextBallNum], &secondBall);
                 }
             }
+            if (IsKeyPressed(KEY_P)) {
+                currentScreen = screenPause;
+            }
+
             if (isCollision(&movingBalls[nextBallNum], staticBalls)) {
                 movingBallsNum--;
                 timeForWaiting = 0.3f;
                 isExplosionStart = true;
-                addStaticBalls(&movingBalls[nextBallNum],staticBalls);
+                addStaticBalls(&movingBalls[nextBallNum], staticBalls);
             }
-
-            drawScreen(&movingBalls[nextBallNum], &staticBalls, &secondBall);
             if (isExplosionStart) {
                 timeForWaiting += GetFrameTime();
 
                 if (timeForWaiting >= 0.5f) {
                     if (isExplosion(&staticBalls[MAX_STATIC_BUBBLE + nextBallNum], staticBalls)) {
-                        for (int i = 0; i < numberOfGameBalls; i++){
+                        for (int i = 0; i < numberOfGameBalls; i++) {
                             if (expQue[i] == -1) {
                                 break;
                             }
@@ -275,7 +348,7 @@ int main(void)
                     }
                     staticBalls[MAX_STATIC_BUBBLE + nextBallNum].isVisible = false;
                     staticBalls[MAX_STATIC_BUBBLE + nextBallNum].isScored = true;
-                    
+
                     if (timeForWaiting >= 0.6f) {
                         if (expQue[counter] != -1) {
 
@@ -301,7 +374,7 @@ int main(void)
                     }
                 }
                 else {
-                    clearArray(expQue,200);
+                    clearArray(expQue, 200);
                     createBall = true;
                     isFallingStart = false;
                     isOrganised = true;
@@ -317,7 +390,7 @@ int main(void)
                         }
                         checkReset(staticBalls);
                     }
-                    clearArray(expQue,200);
+                    clearArray(expQue, 200);
                     isUpdateStart = false;
                     isOrganised = true;
                 }
@@ -385,8 +458,7 @@ int main(void)
                         islevelUp = false;
                     }
                     timeForWaiting += GetFrameTime();
-                    if (timeForWaiting >= 1.30f) {
-
+                    if (timeForWaiting >= 2.00f) {
                         level++;
                         if (level <= 9) {
                             newLevel(arrayOfLevel, level, staticBalls);
@@ -395,13 +467,15 @@ int main(void)
                             islevelUp = true;
                             numberOfGameBalls = MAX_STATIC_BUBBLE + 1;
                         }
-                    }  
+                    }
                 }
-                
+
             }
+
+            drawScreen(&movingBalls[nextBallNum], &staticBalls, &secondBall);
             DrawText(TextFormat("nextballnum: %d", nextBallNum), 0, 800, 16, GRAY);
-            DrawTexture(changeBall, 281, startingPosition.y + 24, WHITE);
             DrawTexture(topBar, 0, 0, WHITE);DrawText(TextFormat("%d", currenBallCounter(staticBalls)), 90, 35, 20, textColor);
+            drawScoreBar(staticBalls, scoreBar, freeStar, goldStar);
             DrawText(TextFormat("SCORE"), 480, 25, 20, textColor);
             DrawText(TextFormat("LEVEL %d", level), 255, 15, 20, textColor);
             DrawText(TextFormat("%d", calculateScore(staticBalls)), 495, 50, 20, textColor);
@@ -436,9 +510,9 @@ void createButton(Button buttonInfo, int spaceX) {
             .height = buttonInfo.size.y 
     };
     if (mousePos.x >= buttonInfo.position.x && mousePos.x <= buttonInfo.position.x + buttonInfo.size.x
-        && mousePos.y >= buttonInfo.position.y && mousePos.y <= buttonInfo.position.y + buttonInfo.size.y) {
+         && mousePos.y >= buttonInfo.position.y && mousePos.y <= buttonInfo.position.y + buttonInfo.size.y) {
         buttonInfo.colorBtn = (Color){ 230, 220, 255, 255 };
-        buttonInfo.colorText = BLACK;
+        buttonInfo.colorText = ORANGE;
     }
 
     textPosX = buttonInfo.position.x + spaceX;
@@ -592,8 +666,9 @@ void drawScreen(Bubble* movingBalls, Bubble staticBalls[], Bubble *secondBall) {
                     staticBalls[i].velocity = (Vector2){ GetRandomValue(-2,2) ,1 };
                     staticBalls[i].isMoving = true;
                 }
-                if (staticBalls[i].position.y > screenHeight + radius * 2) {
+                if (staticBalls[i].position.y >= 1000) {
                     staticBalls[i].velocity = (Vector2){ 0,0 };
+                    staticBalls[i].isScored = true;
                     DrawCircleGradient(staticBalls[i].position.x, staticBalls[i].position.y, radius, staticBalls[i].secondColor, staticBalls[i].color);
                     DrawCircleLinesV(staticBalls[i].position, radius, BLACK);
                 }
@@ -743,6 +818,7 @@ void newLevel(int arrayOfLevel[], int level, Bubble staticBalls[]) {
     FILE* fPtr = NULL;
     int result = 1;
     int row = 0;
+
     switch (level){
     case 1:
         result = fopen_s(&fPtr, "level1.txt", "r");
@@ -787,12 +863,14 @@ void newLevel(int arrayOfLevel[], int level, Bubble staticBalls[]) {
     else {
         printf("dosya okunamadı!");
     }
+
     resetStaticBalls(staticBalls);
+
     for (int i = 0; i < MAX_STATIC_BUBBLE; i++) {
         staticBalls[i].colorNum = arrayOfLevel[i];
         if (staticBalls[i].colorNum == -1) {
-            staticBalls[i].isVisible = false;
-            staticBalls[i].isScored = false;
+            //staticBalls[i].isVisible = false;
+            //staticBalls[i].isScored = false;
             continue;
         }
         staticBalls[i].isScored = false;
@@ -893,4 +971,36 @@ void swapColors(Bubble* firstBall, Bubble* secondBall) {
     secondBall->color = firstHold;
     secondBall->secondColor = secondHold;
     secondBall->colorNum = numberHold;
+}
+void drawScoreBar(Bubble staticBalls[],Rectangle scoreBar, Texture2D freeStar, Texture2D goldStar) {
+    
+    DrawRectangleRounded(scoreBar, 6, 2, GRAY);
+    int barWidth = (calculateScore(staticBalls) * 200) / 3000;
+    Texture2D firstStar = freeStar;
+    Texture2D secondStar = freeStar;
+    Texture2D thirdStar = freeStar;
+
+    if (calculateScore(staticBalls) > 1500 && calculateScore(staticBalls) < 2500) {
+        firstStar = goldStar;
+    }
+    else if (calculateScore(staticBalls) >= 2500 && calculateScore(staticBalls) <= 3000) {
+        firstStar = goldStar;
+        secondStar = goldStar;
+    }
+    if (calculateScore(staticBalls) > 3000) {
+        barWidth = 200;
+        firstStar = goldStar;
+        secondStar = goldStar;
+        thirdStar = goldStar;
+    }
+    Rectangle fill = {
+        .x = scoreBar.x,
+        .y = scoreBar.y,
+        .width = barWidth,
+        .height = scoreBar.height
+    };
+    DrawRectangleRounded(fill, 10, 10, GOLD);
+    DrawTexture(firstStar, scoreBar.x + 90, scoreBar.y - 10, WHITE);
+    DrawTexture(secondStar, scoreBar.x + 145, scoreBar.y - 10, WHITE);
+    DrawTexture(thirdStar, scoreBar.x + 185, scoreBar.y - 10, WHITE);
 }

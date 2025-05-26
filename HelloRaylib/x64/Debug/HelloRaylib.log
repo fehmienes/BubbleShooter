@@ -1,0 +1,74 @@
+﻿  HelloRaylib.c
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(126,55): warning C4244: 'başlatılıyor': 'int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(126,77): warning C4244: 'başlatılıyor': 'int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(175,49): warning C4244: 'başlatılıyor': 'int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(175,73): warning C4244: 'başlatılıyor': 'int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(183,49): warning C4244: 'başlatılıyor': 'int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(183,72): warning C4244: 'başlatılıyor': 'int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(191,49): warning C4244: 'başlatılıyor': 'int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(191,72): warning C4244: 'başlatılıyor': 'int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(199,49): warning C4244: 'başlatılıyor': 'int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(199,68): warning C4244: 'başlatılıyor': 'int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(282,45): warning C4305: 'işlev': 'double' iken 'float' olarak kesildi
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(302,61): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(408,63): warning C4244: '=': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(412,62): warning C4244: '=': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(475,51): warning C4047: 'işlev': 'Bubble *', yöneltme düzeyi sayısı bakımından 'Bubble (*)[440]' ile aynı değil
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(475,51): warning C4024: 'drawScreen': 2 biçimsel ve gerçek parametresi için farklı türler
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(121,31): warning C4244: 'başlatılıyor': 'int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(104,11): warning C4101: 'music': yerel değişken başvurusu kaldırıldı
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(518,38): warning C4244: '=': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(519,38): warning C4244: '=': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(520,34): warning C4305: 'işlev': 'double' iken 'float' olarak kesildi
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(521,41): warning C4305: 'işlev': 'double' iken 'float' olarak kesildi
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(565,109): warning C4244: 'işlev': 'const int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(565,141): warning C4244: 'işlev': 'const int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(646,49): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(646,74): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(646,78): warning C4244: 'işlev': 'const int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(647,49): warning C4244: 'işlev': 'const int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(650,48): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(650,72): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(650,76): warning C4244: 'işlev': 'const int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(651,48): warning C4244: 'işlev': 'const int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(659,55): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(659,82): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(659,86): warning C4244: 'işlev': 'const int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(660,68): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(660,95): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(661,55): warning C4244: 'işlev': 'const int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(666,58): warning C4244: 'başlatılıyor': 'int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(672,63): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(672,90): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(672,94): warning C4244: 'işlev': 'const int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(673,63): warning C4244: 'işlev': 'const int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(677,50): warning C4305: '*=': 'double' iken 'float' olarak kesildi
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(678,50): warning C4305: '*=': 'double' iken 'float' olarak kesildi
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(679,63): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(679,90): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(679,94): warning C4244: 'işlev': 'const int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(680,63): warning C4244: 'işlev': 'const int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(686,46): warning C4305: '*=': 'double' iken 'float' olarak kesildi
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(687,46): warning C4305: '*=': 'double' iken 'float' olarak kesildi
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(688,59): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(688,86): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(688,90): warning C4244: 'işlev': 'const int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(689,59): warning C4244: 'işlev': 'const int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(700,62): warning C4244: 'işlev': 'int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(700,101): warning C4244: 'başlatılıyor': 'const int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(708,67): warning C4244: 'işlev': 'int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(708,111): warning C4244: 'işlev': 'int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(776,49): warning C4244: '=': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(781,48): warning C4244: '=': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(877,37): warning C4244: '=': 'int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(878,37): warning C4244: '=': 'int' - 'float' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(1003,39): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(1003,56): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(1004,40): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(1004,58): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(1005,39): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(1005,57): warning C4244: 'işlev': 'float' - 'int' dönüşümü; veri kaybı olabilir
+C:\Users\Fehmi Enes\source\repos\HelloRaylib\HelloRaylib\HelloRaylib.c(999,18): warning C4244: 'başlatılıyor': 'int' - 'float' dönüşümü; veri kaybı olabilir
+  HelloRaylib.vcxproj -> C:\Users\Fehmi Enes\source\repos\HelloRaylib\x64\Debug\HelloRaylib.exe
+  'pwsh.exe' is not recognized as an internal or external command,
+  operable program or batch file.
